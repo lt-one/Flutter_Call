@@ -1,0 +1,38 @@
+name: call_log_viewer
+description: 通话详单查看器 - 一比一复刻中国联通通话记录界面
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # 数据库
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  path_provider: ^2.1.1
+  
+  # UI组件
+  cupertino_icons: ^1.0.6
+  
+  # 状态管理
+  provider: ^6.1.1
+  
+  # 工具库
+  intl: ^0.18.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/splash.png
+    - assets/images/icon.png
+
