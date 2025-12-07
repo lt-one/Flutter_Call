@@ -42,6 +42,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/.gradle/
+/android/app/src/main/AndroidManifest.xml.backup
+/android/local.properties
 
 # Database
 *.db

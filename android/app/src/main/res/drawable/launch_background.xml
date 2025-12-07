@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
+    <!-- 纯色背景，可以根据需要修改颜色 -->
+    <item android:drawable="@android:color/white"/>
 </layer-list>
 
