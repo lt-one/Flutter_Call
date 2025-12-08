@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../models/call_log.dart';
+import 'custom_icons.dart';
 
 /// 通话记录列表项
 class CallLogItem extends StatelessWidget {
   final CallLog log;
   final VoidCallback? onLongPress;
+  final bool isFirst;
 
   const CallLogItem({
     super.key,
     required this.log,
     this.onLongPress,
+    this.isFirst = false,
   });
 
   String _getWeekday() {
@@ -24,7 +27,12 @@ class CallLogItem extends StatelessWidget {
         InkWell(
           onLongPress: onLongPress,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+            padding: EdgeInsets.only(
+              left: 15,
+              right: 15,
+              top: isFirst ? 10 : 12,
+              bottom: 12,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -153,17 +161,17 @@ class CallLogItem extends StatelessWidget {
                   '高清语音',
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w500,
                     color: Color(0xFF333333),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Row(
                   children: [
-                    Icon(
-                      log.isOutgoing ? Icons.call_made : Icons.call_received,
+                    createPhoneIcon(
                       size: 16,
                       color: log.isOutgoing ? const Color(0xFF0BB415) : const Color(0xFF5FA8F2),
+                      isOutgoing: log.isOutgoing,
                     ),
                     const SizedBox(width: 2),
                     Text(
@@ -226,4 +234,5 @@ class CallLogItem extends StatelessWidget {
     );
   }
 }
+
 

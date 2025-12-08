@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/call_log.dart';
 import '../services/database_service.dart';
 import '../widgets/call_log_item.dart';
+import '../widgets/custom_icons.dart';
 import 'dart:math' as math;
 
 /// 主界面 - 通话详单查询
@@ -25,16 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadData();
-    
-    // 设置主界面状态栏样式（红色背景，白色图标）
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Color(0xFFF9F9F9),
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-    );
+    // 状态栏样式通过AnnotatedRegion在build方法中设置
   }
 
   Future<void> _loadData() async {
@@ -300,22 +292,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFEE675F),
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: _buildContent(),
-          ),
-        ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent, // 状态栏透明
+        statusBarIconBrightness: Brightness.light, // 状态栏图标为白色
+        systemNavigationBarColor: Color(0xFFF9F9F9), // 导航栏背景色
+        systemNavigationBarIconBrightness: Brightness.dark, // 导航栏图标为深色
+      ),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFEE675F),
+        body: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: _buildContent(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   /// 构建头部区域（红色渐变）
   Widget _buildHeader() {
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    
     return Container(
+      // 背景延伸到状态栏区域（不使用SafeArea包裹背景）
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
@@ -323,18 +326,32 @@ class _HomeScreenState extends State<HomeScreen> {
           colors: [Color(0xFFEB4C46), Color(0xFFEE675F)],
         ),
       ),
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // 顶部导航栏
-            _buildTopBar(),
-            // 费用统计
-            _buildFeeSection(),
-            // Tab栏
-            _buildTabBar(),
-          ],
-        ),
+      child: Stack(
+        children: [
+          // 指纹纹路装饰层 - 放在底层，延伸到状态栏区域
+          Positioned(
+            right: -80,
+            top: -50 - statusBarHeight, // 延伸到状态栏区域
+            child: createFingerprintPattern(
+              width: 350,
+              height: 200 + statusBarHeight, // 增加高度以覆盖状态栏区域
+            ),
+          ),
+          // 内容层 - 使用 SafeArea 保护内容不被状态栏遮挡
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // 顶部导航栏
+                _buildTopBar(),
+                // 费用统计
+                _buildFeeSection(),
+                // Tab栏
+                _buildTabBar(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -383,10 +400,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: const Color(0xFFEF625E),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: const Icon(
-                  Icons.arrow_back_ios_new,
-                  color: Colors.black,
-                  size: 16,
+                child: Center(
+                  child: createArrowIcon(
+                    size: 22,
+                    color: Colors.black,
+                    strokeWidth: 2.0,
+                  ),
                 ),
               ),
               // 右侧按钮组
@@ -401,10 +420,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: const Color(0xFFE8B5B0),
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      child: const Icon(
-                        Icons.star_border,
-                        color: Colors.black,
-                        size: 18,
+                      child: Center(
+                        child: createStarIcon(
+                          size: 24,
+                          color: Colors.black,
+                          strokeWidth: 2.0,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -416,34 +437,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 5),
                       height: 30,
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           GestureDetector(
                             onTap: _showMoreMenu,
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.more_horiz,
-                                color: Colors.black,
-                                size: 18,
-                              ),
+                            child: createThreeDotsIcon(
+                              size: 30,
+                              color: Colors.black,
                             ),
                           ),
                           Container(
                             width: 1,
                             height: 16,
                             color: Colors.white.withOpacity(0.5),
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
                           ),
-                          Container(
-                            width: 30,
-                            height: 30,
-                            alignment: Alignment.center,
-                            child: const Icon(
-                              Icons.history,
-                              color: Colors.black,
-                              size: 18,
-                            ),
+                          createHistoryIcon(
+                            size: 30,
+                            color: Colors.black,
                           ),
                         ],
                       ),
@@ -461,30 +472,30 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 费用统计区域
   Widget _buildFeeSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 30),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
             '通话费用总计',
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
               color: Color(0xFFFBFFFD),
             ),
           ),
-          const SizedBox(width: 3),
+          const SizedBox(width: 10),
           Text(
             '${_totalFee.toStringAsFixed(2)}元',
             style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
               color: Color(0xFFFBFFFD),
             ),
           ),
           const Spacer(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
             decoration: BoxDecoration(
               border: Border.all(color: const Color(0xFFFFFBEB), width: 0.8),
               borderRadius: BorderRadius.circular(15),
@@ -522,7 +533,7 @@ class _HomeScreenState extends State<HomeScreen> {
           text,
           style: TextStyle(
             fontSize: 15,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
             color: const Color(0xFFFBFFFD),
           ),
         ),
@@ -567,12 +578,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 5),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           for (var month in ['12月', '11月', '10月', '9月', '8月', '7月', '6月'])
-            Expanded(
+            Flexible(
               child: _buildMonthButton(month, month == '12月'),
             ),
-          Expanded(
+          Flexible(
             child: _buildCalendarButton(),
           ),
         ],
@@ -581,19 +593,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMonthButton(String month, bool isSelected) {
+    // 内部方块大小固定为48，保持正方形
+    const double innerBoxSize = 48;
+    const double topSectionHeight = 26;
+    const double bottomSectionHeight = 15;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 2),
+      alignment: Alignment.center,
       child: Container(
+        width: innerBoxSize,
+        height: innerBoxSize,
         decoration: BoxDecoration(
           border: Border.all(
             color: isSelected ? const Color(0xFFEB4C46) : Colors.transparent,
+            width: 1,
           ),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Column(
           children: [
             Container(
-              height: 26,
+              width: innerBoxSize,
+              height: topSectionHeight,
               decoration: BoxDecoration(
                 color: isSelected ? const Color(0xFFFFF5F5) : null,
                 borderRadius: const BorderRadius.only(
@@ -606,12 +627,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 month,
                 style: TextStyle(
                   fontSize: 15,
+                  fontWeight: FontWeight.w500,
                   color: isSelected ? const Color(0xFFE94947) : const Color(0xFF333333),
+                  letterSpacing: -1.0,
                 ),
               ),
             ),
             Container(
-              height: 15,
+              width: innerBoxSize,
+              height: bottomSectionHeight,
               decoration: BoxDecoration(
                 color: isSelected ? const Color(0xFFFCFCF5) : null,
                 borderRadius: const BorderRadius.only(
@@ -624,7 +648,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 '2025',
                 style: TextStyle(
                   fontSize: 11,
+                  fontWeight: FontWeight.w500,
                   color: isSelected ? const Color(0xFFE94947) : const Color(0xFF333333),
+                  letterSpacing: 0,
                 ),
               ),
             ),
@@ -635,29 +661,40 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCalendarButton() {
+    // 内部方块大小固定为48，保持正方形
+    const double innerBoxSize = 48;
+    const double topSectionHeight = 26;
+    const double bottomSectionHeight = 15;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 2),
       alignment: Alignment.center,
-      child: Column(
-        children: [
-          Container(
-            height: 26,
-            alignment: Alignment.center,
-            child: const Icon(
-              Icons.calendar_today,
-              size: 20,
-              color: Color(0xFFE57D80),
+      child: Container(
+        width: 64, // 日历按钮稍宽以容纳文字
+        height: innerBoxSize,
+        alignment: Alignment.center,
+        child: Column(
+          children: [
+            Container(
+              width: 60,
+              height: topSectionHeight,
+              alignment: Alignment.center,
+              child: createCalendarIcon(
+                size: 25,
+                color: const Color(0xFFD8716B),
+                bgColor: const Color(0xFFFFDEE3),
+              ),
             ),
-          ),
-          Container(
-            height: 15,
-            alignment: Alignment.center,
-            child: const Text(
-              '按日选择',
-              style: TextStyle(fontSize: 10, color: Color(0xFFE57D80)),
+            Container(
+              width: 60,
+              height: bottomSectionHeight,
+              alignment: Alignment.center,
+              child: const Text(
+                '按日选择',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFFD8716B)),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -674,25 +711,50 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Row(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text('顺序', style: TextStyle(fontSize: 12, color: Color(0xFF3F3F3F))),
-              SizedBox(width: 2),
-              Icon(Icons.unfold_more, size: 16, color: Color(0xFFA3A3A3)),
+              const Text('顺序', style: TextStyle(fontSize: 12, color: Color(0xFF3F3F3F))),
+              const SizedBox(width: 2),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: createSortIcons(
+                  size: 16,
+                  colorUp: const Color(0xFFA3A3A3),
+                  colorDown: const Color(0xFF353535),
+                ),
+              ),
             ],
           ),
-          const Row(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text('呼叫类型', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              SizedBox(width: 2),
-              Icon(Icons.arrow_drop_down, size: 16, color: Colors.grey),
+              const Text('呼叫类型', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(width: 2),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: createDropdownIcon(
+                  size: 8,
+                  color: Colors.grey,
+                ),
+              ),
             ],
           ),
-          const Row(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text('费用', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              SizedBox(width: 2),
-              Icon(Icons.arrow_drop_down, size: 16, color: Colors.grey),
+              const Text('费用', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(width: 2),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: createDropdownIcon(
+                  size: 8,
+                  color: Colors.grey,
+                ),
+              ),
             ],
           ),
           Container(
@@ -701,13 +763,17 @@ class _HomeScreenState extends State<HomeScreen> {
               color: const Color(0xFFF7F7F7),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Text('号码筛选', style: TextStyle(fontSize: 14, color: Color(0xFFC8C8C8))),
-                SizedBox(width: 5),
-                Text('|', style: TextStyle(fontSize: 14, color: Color(0xFFE0E0E0))),
-                SizedBox(width: 5),
-                Icon(Icons.search, size: 16, color: Color(0xFF939393)),
+                const Text('号码筛选', style: TextStyle(fontSize: 14, color: Color(0xFFC8C8C8))),
+                const SizedBox(width: 5),
+                const Text('|', style: TextStyle(fontSize: 14, color: Color(0xFFE0E0E0))),
+                const SizedBox(width: 5),
+                createSearchIcon(
+                  size: 16,
+                  color: const Color(0xFF939393),
+                  strokeWidth: 1.8,
+                ),
               ],
             ),
           ),
@@ -725,13 +791,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return ListView.builder(
+      shrinkWrap: false,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       itemCount: _callLogs.length + 1,
       itemBuilder: (context, index) {
         if (index == _callLogs.length) {
-          return const Column(
+          return Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Divider(height: 0.5, color: Color(0xFFEEEEEE), indent: 15, endIndent: 15),
-              Padding(
+              const Divider(height: 0.5, color: Color(0xFFEEEEEE), indent: 15, endIndent: 15),
+              const Padding(
                 padding: EdgeInsets.symmetric(vertical: 15),
                 child: Text(
                   '没有更多了',
@@ -743,9 +813,15 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         final log = _callLogs[index];
-        return CallLogItem(
-          log: log,
-          onLongPress: () => _showEditMenu(log),
+        // 第一个项目减小上边距
+        final isFirst = index == 0;
+        return Padding(
+          padding: EdgeInsets.only(top: isFirst ? 0 : 0, bottom: 0),
+          child: CallLogItem(
+            log: log,
+            isFirst: isFirst,
+            onLongPress: () => _showEditMenu(log),
+          ),
         );
       },
     );
@@ -754,8 +830,9 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 底部功能栏
   Widget _buildBottomBar() {
     return Container(
-      height: 60,
-      padding: const EdgeInsets.only(top: 10),
+      height: 50,
+      alignment: Alignment.topCenter,
+      padding: const EdgeInsets.only(top: 5),
       decoration: BoxDecoration(
         color: const Color(0xFFF9F9F9),
         boxShadow: [
@@ -767,16 +844,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('温馨提示', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          Text(' | ', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          Text('安全验证', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          Text(' | ', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          Text('满意度调查', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          Text(' | ', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          Text('下载详单', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const Text('温馨提示', style: TextStyle(fontSize: 12, color: Color(0xFF666666))),
+          const Text(' | ', style: TextStyle(fontSize: 12, color: Color(0xFF999999))),
+          const Text('安全验证', style: TextStyle(fontSize: 12, color: Color(0xFF666666))),
+          const Text(' | ', style: TextStyle(fontSize: 12, color: Color(0xFF999999))),
+          const Text('满意度调查', style: TextStyle(fontSize: 12, color: Color(0xFF666666))),
+          const Text(' | ', style: TextStyle(fontSize: 12, color: Color(0xFF999999))),
+          const Text('下载详单', style: TextStyle(fontSize: 12, color: Color(0xFF666666))),
         ],
       ),
     );
@@ -820,4 +897,5 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
 

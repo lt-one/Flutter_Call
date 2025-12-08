@@ -17,6 +17,7 @@ dependencies:
   
   # UI组件
   cupertino_icons: ^1.0.6
+  flutter_svg: ^2.0.10+1
   
   # 状态管理
   provider: ^6.1.1
@@ -35,4 +36,5 @@ flutter:
   assets:
     - assets/images/splash.png
     - assets/images/icon.png
+
 
