@@ -57,13 +57,39 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// 根据日期字符串(MM.DD)计算星期几
+  String _getWeekdayFromDate(String dateStr) {
+    try {
+      final now = DateTime.now();
+      final parts = dateStr.split('.');
+      if (parts.length == 2) {
+        final month = int.parse(parts[0]);
+        final day = int.parse(parts[1]);
+        final year = now.year;
+        final date = DateTime(year, month, day);
+        final weekdays = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+        // DateTime.weekday 返回 1-7 (Monday-Sunday)
+        return weekdays[date.weekday - 1];
+      }
+    } catch (e) {
+      // 解析失败时返回空字符串
+    }
+    return '';
+  }
+
   /// 显示添加/编辑对话框
   void _showLogDialog({CallLog? log}) {
     final isEdit = log != null;
+    final now = DateTime.now();
+    final defaultDate = now.toString().substring(5, 10).replaceAll('-', '.');
+    
     final phoneController = TextEditingController(text: log?.phoneNumber ?? '');
     final locationController = TextEditingController(text: log?.location ?? '福建福州');
     final dateController = TextEditingController(
-      text: log?.callDate ?? DateTime.now().toString().substring(5, 10).replaceAll('-', '.'),
+      text: log?.callDate ?? defaultDate,
+    );
+    final weekdayController = TextEditingController(
+      text: log?.weekday ?? (log == null ? _getWeekdayFromDate(defaultDate) : ''),
     );
     final timeController = TextEditingController(
       text: log?.connectTime ?? TimeOfDay.now().format(context),
@@ -102,6 +128,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextField(
                   controller: dateController,
                   decoration: const InputDecoration(labelText: '日期 (MM.DD)'),
+                  onChanged: (value) {
+                    // 当日期改变时，自动计算并更新星期几
+                    // 用户仍可以手动修改星期几字段
+                    final weekday = _getWeekdayFromDate(value);
+                    if (weekday.isNotEmpty) {
+                      setDialogState(() {
+                        weekdayController.text = weekday;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: weekdayController,
+                  decoration: const InputDecoration(
+                    labelText: '星期',
+                    hintText: '留空自动计算，或手动输入',
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -147,6 +191,12 @@ class _HomeScreenState extends State<HomeScreen> {
             TextButton(
               onPressed: () async {
                 try {
+                  // 如果星期几为空，根据日期自动计算
+                  String weekday = weekdayController.text.trim();
+                  if (weekday.isEmpty) {
+                    weekday = _getWeekdayFromDate(dateController.text);
+                  }
+                  
                   final newLog = CallLog(
                     id: log?.id,
                     phoneNumber: phoneController.text,
@@ -158,6 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     callDate: dateController.text,
                     callTime: timeController.text,
                     isOutgoing: isOutgoing,
+                    weekday: weekday.isNotEmpty ? weekday : null,
                   );
 
                   if (isEdit) {

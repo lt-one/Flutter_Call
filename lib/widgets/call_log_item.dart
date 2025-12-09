@@ -16,8 +16,28 @@ class CallLogItem extends StatelessWidget {
   });
 
   String _getWeekday() {
-    // 简化版：这里可以根据日期计算星期几
-    return log.weekday ?? '星期一';
+    // 如果已有星期几，直接返回
+    if (log.weekday != null && log.weekday!.isNotEmpty) {
+      return log.weekday!;
+    }
+    
+    // 否则根据日期计算
+    try {
+      final now = DateTime.now();
+      final parts = log.callDate.split('.');
+      if (parts.length == 2) {
+        final month = int.parse(parts[0]);
+        final day = int.parse(parts[1]);
+        final year = now.year;
+        final date = DateTime(year, month, day);
+        final weekdays = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+        // DateTime.weekday 返回 1-7 (Monday-Sunday)
+        return weekdays[date.weekday - 1];
+      }
+    } catch (e) {
+      // 解析失败时返回默认值
+    }
+    return '星期一';
   }
 
   @override
